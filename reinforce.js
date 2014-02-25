@@ -1,11 +1,12 @@
 var reward = 0.1;
 var penalty = -100;
-var discountFactor =  0.9;
+var discountFactor =  0.9; //good runs were at 0.9
 var minThreshold = 0.0000005;
 var previousDecision = null;
 var currentDecision = null;
 var mySarLog = new SARLog();
-//mySarLog.sarMap = modelTwo;
+
+mySarLog.sarMap = nightModel;
 
 var decisionsInChain = 0;
 
@@ -16,7 +17,7 @@ function onUpdate(){
    //dead bird
    //consflappyGame.flappyBird
   if(flappyGame.getFlappyBird().alive === false){
-   scoreDecisionList(currentDecision, penalty, 5);
+   scoreDecisionList(currentDecision, penalty, 10);
    currentDecision = null;
    //console.log(decisionsInChain);
    decisionsInChain = 0;
@@ -93,10 +94,10 @@ flappyGame.requestFunction(onUpdate, 15);
 
 function makeRecordDecision(record){
   var jump = false;
-  if(Math.random()>0.9){
+  /*if(Math.random()>0.95){
       jump = true;
       //console.log("psuedo jump");
-   }
+   } */
    if(record === null || record === undefined){
       return jump;
    }
@@ -112,12 +113,12 @@ function makeRecordDecision(record){
          jump = true;
       }
       //explore
-     if(record.totalFallReward === 0 || record.totalJumpReward === 0){
-         jump = Math.random()>0.8;
-      }
+     // if(record.totalFallReward === 0 || record.totalJumpReward === 0){
+     //     //jump = Math.random()>0.8;
+     //  }
 
-      if(record.totalFallReward === record.totalJumpReward){
-            jump = Math.random()>0.8;
+      else if(record.totalFallReward === record.totalJumpReward){
+            //jump = Math.random()>0.95;
             jump = false;
 
       }
@@ -150,7 +151,7 @@ makeDecision = function(vector){
       record = new SAR();
       record.state = vector;
       mySarLog.saveSARRecord(record);
-      console.log("creating new record");
+      //console.log("creating new record");
 
    }
 

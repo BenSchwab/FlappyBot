@@ -571,7 +571,8 @@ function PlayButton (){
          pipeTwo.x +=camera.x + 50;
          pipeOne.y = 0;
          //var pipeHeight = Math.floor((totalRoom - spaceSize)*Math.random());
-         var pipeHeight = min + Math.floor((totalRoom- spaceSize - min)*Math.random());
+         var rand = (Math.floor(Math.random()*9)+1)/10;
+         var pipeHeight = min + Math.floor((totalRoom- spaceSize - min)*rand);
          pipeOne.height = pipeHeight;
          pipeTwo.height = totalRoom-spaceSize-pipeHeight;
          pipeTwo.y = totalRoom-pipeTwo.height;

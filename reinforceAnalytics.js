@@ -18,3 +18,12 @@ function sarMapToArray(sarMap){
 function sortSarArray(sarArray){
    return sarArray.sort(sarSorter);
 }
+
+function combineModels(modelOne, modelTwo){
+   for(var p1 in modelOne){
+      if(!modelTwo.hasOwnProperty(p1)){
+         modelTwo[p1] = modelOne[p1];
+      }
+   }
+   return modelTwo;
+}
