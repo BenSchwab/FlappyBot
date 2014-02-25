@@ -6,7 +6,7 @@ var previousDecision = null;
 var currentDecision = null;
 var mySarLog = new SARLog();
 
-mySarLog.sarMap = nightModel;
+mySarLog.sarMap = dayModel;
 
 var decisionsInChain = 0;
 
