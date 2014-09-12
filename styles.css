@@ -12,3 +12,75 @@
 h1{
    font-family: 'flappy_font';
 }
+
+body{
+   margin: 0;
+   background-image: url("siteAssets/mochaGrunge.png");
+   background-repeat: repeat;
+}
+
+button{
+   display: block;
+}
+
+canvas{
+   border: 5px solid black;
+   border-radius: 4px;
+   margin:  5px auto;
+   display: inline;
+}
+
+.button_style{
+   height: 200px;
+   width: 200px;
+   padding: 10px;
+   margin: 20px;
+   font-size: 30px;
+   font-family: 'flappy_font';
+   display: block;
+   background-color: white;
+   border: 3px solid black;
+   border-radius: 3px;
+}
+#header{
+   text-align: center;
+}
+
+#about{
+   float: left;
+   margin-left: 30px;
+}
+
+.button_style:hover{
+   background-color: green;
+}
+.button_style:active{
+   background-color: red;
+}
+
+#control_div{
+   float: left;
+   display: block;
+
+   height: 100%;
+}
+
+#game_comp{
+   display: inline;
+   text-align: center;
+}
+
+#game_div{
+   text-align: center;
+   float: left;
+
+}
+
+#flappy{
+   font-family: 'flappy_font';
+   font-size: 40px;
+}
+#bot{
+   font-family: 'courier';
+   font-size: 40px;
+}

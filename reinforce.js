@@ -1,3 +1,13 @@
+(function(){
+
+  var playButton =  document.querySelector('#play_button');
+  var botButton =  document.querySelector('#watch_button');
+
+  playButton.addEventListener("click", onPlayGameClick);
+  botButton.addEventListener("click", onPlayBot);
+
+var train = false;
+flappyGame.disableInput = true;
 var reward = 0.1;
 var penalty = -100;
 var discountFactor =  0.9; //good runs were at 0.9
@@ -6,27 +16,34 @@ var previousDecision = null;
 var currentDecision = null;
 var mySarLog = new SARLog();
 
-mySarLog.sarMap = dayModel;
+//mySarLog.sarMap = JSON.parse(rb6);
+mySarLog.sarMap = finalModel;
 
 var decisionsInChain = 0;
+
+function onPlayGameClick(){
+  console.log("on play game!");
+  flappyGame.disableInput = false;
+  flappyGame.restart();
+  flappyGame.requestFunction(function(){}, 1000);
+}
+
+function onPlayBot(){
+  console.log("on play bot!");
+  flappyGame.disableInput = true;
+  flappyGame.restart();
+  flappyGame.requestFunction(onUpdate, 2);
+}
 
 
 var pendingReset = false;
 function onUpdate(){
-   //console.log("Im being called");
-   //dead bird
-   //consflappyGame.flappyBird
   if(flappyGame.getFlappyBird().alive === false){
    scoreDecisionList(currentDecision, penalty, 10);
    currentDecision = null;
-   //console.log(decisionsInChain);
    decisionsInChain = 0;
-     //console.log("dead bird");
-   //console.log("dead bird");
+
       flappyGame.requestFunction(function(){}, 1000);
-      //apply penalty
-     // console.log(currentDecision.sarLog.state.x +" "+ currentDecision.sarLog.state.y);
-      //console.log(currentDecision.jump);
 
             //start a new game
             setTimeout(function(){
@@ -40,14 +57,11 @@ function onUpdate(){
       decisionsInChain ++;
 
       var rect = flappyGame.getStateRectangle();
-      //console.log(rect);
        var vector = rectToVector(rect);
        var mom = flappyGame.calculateMomentum();
        if(mom){
-         //console.log("going down");
        }
        else{
-         //console.log("going up");
        }
        scoreDecisionList(currentDecision, reward, 5);
       // console.log(vector.x + " " + vector.y);
@@ -61,12 +75,9 @@ function onUpdate(){
 
       var n = new SARLL(record, currentDecision, jump);
       currentDecision = n;
-      //console.log(jump);
         if(jump){
          record.jumpCount++;
-         //console.log("I choose jump at " + vector.x +" "+ vector.y);
           flappyGame.simulateClick();
-         //console.log("simulating click");
        }
        else{
          record.fallCount++;
@@ -77,19 +88,14 @@ function onUpdate(){
 }
 
 function printSARLog(){
-   //console.log(JSON.stringify(Object.keys(mySarLog.sarMap).length));
-   //console.log(JSON.stringify(mySarLog.sarMap));
+
 }
 function printSARLogConsole(){
    console.log(JSON.stringify(Object.keys(mySarLog.sarMap).length));
    console.log(JSON.stringify(mySarLog.sarMap));
 }
-setInterval(printSARLog, 5000);
+//setInterval(printSARLog, 5000);
 
-
-//console.log(flappyGame.getNextPipe());
-flappyGame.startGame();
-flappyGame.requestFunction(onUpdate, 15);
 
 
 function makeRecordDecision(record){
@@ -159,6 +165,9 @@ makeDecision = function(vector){
 };
 
 function scoreDecisionList(currentSAR, reward, max){
+  if(train===false){
+    return;
+  }
    if(max <= 0){
       return;
    }
@@ -235,9 +244,7 @@ function SARLog(sarMap){
 
       }
       if(minDist<15){
-         //console.log(minDist);
          return null;
-         //return bestRecord;
       }
       else{
          return null;
@@ -248,9 +255,6 @@ function SARLog(sarMap){
 }
 
 function distance(p1,p2){
-  // var wha = (p1.x-p2.x);
-  // var hmm = (p1.x-p2.x)*(p1.x-p2.x);
-   //console.log(wha +" " +hmm);
    return Math.sqrt((p1.x -p2.x)*(p1.x -p2.x) +(p1.y-p2.y)*(p1.y-p2.y));
 }
 
@@ -280,4 +284,7 @@ function Point(x,y){
   this.x = x;
   this.y = y;
 }
+
+onPlayBot();
+})();
 

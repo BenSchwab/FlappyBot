@@ -8,6 +8,20 @@ var flappyGame = (function(){
   var screen_width = canvas.width;
   var overflowCheck = 9007199254740900;
   var flappyKirill = false;
+  var snow = true;
+
+  //----------- Audio bank-------------------------------//
+  var coinAudio = new Audio('assets/audio/coin.wav');
+  var flapAudio = new Audio('assets/audio/flap.wav');
+  var deadAudio = new Audio('assets/audio/dead.wav');
+
+function playAudio(audio){
+   if (audio.paused) {
+        audio.play();
+    }else{
+        audio.currentTime = 0;
+    }
+}
 
 
   //-------------Image Bank---------------------------------//
@@ -15,7 +29,8 @@ var flappyGame = (function(){
     var images = ["background.png", "ground.png",
     "bird_one.png", "bird_two.png", "bird_three.png","bird_dead.png",
     "pipe_up.png", "pipe_down.png", "scoreboard.png", "bird_down.png",
-    "play.png", "kirill_one.png","kirill_two.png","kirill_three.png","kirill_dead.png"];
+    "play.png", "kirill_one.png","kirill_two.png","kirill_three.png",
+    "kirill_dead.png", "duke_background.png", "snow_ground.png", "finger.png", "finger_touch.png"];
     var imageBank = {};
     var doneCount= 0;
 
@@ -53,6 +68,38 @@ var flappyGame = (function(){
    mixin.call(self);
    return self;
  }, this);
+};
+
+Finger = function(){
+  apply_mixin.call(this, Entity);
+  this.width = 90;
+  this.height = 200;
+  this.x = 30;
+  this.y = screen_height-this.height;
+  this.standardDraw = this.draw;
+  this.stationary = true;
+  this.touchTime = 5;
+  this.currentTouchTime = 0;
+
+  this.standarSpriteSheet =new SpriteSheet([imageBank["finger"]],[1]);
+  this.clickSpriteSheet = new SpriteSheet([imageBank["finger_touch"]],[100]);
+  this.spriteSheet =  this.standarSpriteSheet;
+  this.draw = function(ctx, camera){
+    this.standardDraw(ctx, camera);
+    this.currentTouchTime --;
+  };
+  this.getSpriteSheet = function(){
+    if(this.currentTouchTime>0){
+      return this.clickSpriteSheet;
+    }
+    else{
+      return this.standarSpriteSheet;
+    }
+  };
+  this.touch = function(){
+    this.currentTouchTime = this.touchTime;
+  };
+
 };
 
 
@@ -159,6 +206,7 @@ Entity = function() {
      activeForces.push(jf);
      gravityForce.resetGravity();
    }
+   playAudio(flapAudio);
   };
   return this;
 }
@@ -249,17 +297,14 @@ this.completed = false;
 this.onCollision = function(){
   flappyBird.alive = false;
   momentum.dirty = true;
+  playAudio(deadAudio);
 };
 return this;
 }
 
 function Ground(){
  apply_mixin.call(this, Entity, CollidableEntity);
- this.onCollision = function(){
-  flappyBird.alive=false;
-  momentum.dirty = true;
-  gravityForce.dirty=true;
-};
+
 
 this.color = "green";
 this.width = screen_width;
@@ -268,13 +313,17 @@ this.x = 0;
 this.y = screen_height-100;
 this.zIndex = 3;
 this.stationary = true;
-this.spriteSheet = new SpriteSheet([imageBank.ground],[10]);
+this.spriteSheet = new SpriteSheet([imageBank.snow_ground],[10]);
 this.onCollision = function(){
+  if(flappyBird.alive){
+    playAudio(deadAudio);
+  }
   flappyBird.alive=false;
   momentum.dirty = true;
   gravityForce.dirty=true;
   scoreBoard.visible = true;
   playButton.visible = true;
+
 };
 }
 
@@ -287,7 +336,7 @@ function Sky(){
  this.y = 0;
  this.zIndex = 0;
  this.stationary = true;
- this.spriteSheet = new SpriteSheet([imageBank.background],[10]);
+ this.spriteSheet = new SpriteSheet([imageBank.duke_background],[10]);
 }
 
 function ScoreBoard(){
@@ -329,23 +378,30 @@ this.scorePipes = function(pipes){
   this.score ++;
   this.bestScore = Math.max(this.bestScore, this.score);
   scoreMessage.message = this.score+"";
+  playAudio(coinAudio);
 }
 };
 }
 
-function TextMessage(message, position, duration){
+function TextMessage(message, position, duration, fill){
  this.message = message;
  this.position = position;
  this.duration = duration;
  this.dirty = false;
  this.frames = 0;
+ this.fill = fill;
  this.draw = function(ctx){
   this.frames++;
   if(this.frames>this.duration&&this.duration!=="infinte"){
    this.dirty = true;
    return;
  }
- ctx.fillStyle = "white";
+ if(this.fill!==undefined){
+  ctx.fillStyle = this.fill;
+ }
+ else{
+   ctx.fillStyle = "white";
+  }
  ctx.font = "50px flappy_font";
  ctx.fillText(this.message,this.position.x,this.position.y);
  ctx.fillStyle = "black";
@@ -486,10 +542,11 @@ function PlayButton (){
    }
    function restartGame(){
     //console.log("restarting game");
-    createInitialGameObjects();
     scoreBoard.score = 0;
+    createInitialGameObjects();
     scoreBoard.visible = false;
     playButton.visible = false;
+
     gameOn = true;
   }
 
@@ -537,12 +594,13 @@ function PlayButton (){
     activeForces.push(gravityForce);
     activeForces.push(momentum);
     playButton = new PlayButton();
-    scoreMessage = new TextMessage(""+scoreBoard.score, new Point(screen_width/2, screen_height/4), "infinite");
+    scoreMessage = new TextMessage(""+scoreBoard.score, new Point(screen_width/2, screen_height/8), "infinite");
     registerEntity(flappyBird);
     registerEntity(sky);
     registerEntity(ground);
     registerEntity(scoreBoard);
     makePipeGenerator();
+    gameText.push( new TextMessage("Get Ready!", new Point(screen_width/2-100, screen_height/2), 80, "orange") );
     //flappyGame.flappyBird = flappyBird;
 
 
@@ -640,7 +698,7 @@ makePipeGenerator();
    var gameOn = false;
    var animFrame;
    function startGame(){
-    gameOn = true;
+    //gameOn = true;
     animFrame = window.requestAnimationFrame ||
     window.webkitRequestAnimationFrame ||
     window.mozRequestAnimationFrame    ||
@@ -648,11 +706,12 @@ makePipeGenerator();
     window.msRequestAnimationFrame     ||
     null ;
     animFrame(recursiveAnim);
-   // flappyGame.flappyBird = flappyBird;
-
+      // flappyGame.flappyBird = flappyBird;
   }
   var recursiveAnim = function() {
-    mainloop();
+    if(gameOn){
+      mainloop();
+    }
     animFrame( recursiveAnim );
   };
 
@@ -673,7 +732,9 @@ makePipeGenerator();
 
 //---------------------------Draw Loop----------------------------//
 
-
+snow = new SnowEffect();
+finger = new Finger();
+showFinger = true;
 function drawGame(){
 
  entities.forEach(function(entity){
@@ -683,11 +744,18 @@ function drawGame(){
   text.draw(ctx);
 });
  scoreMessage.draw(ctx);
+if(snow){
+   snow.draw();
+}
+if(showFinger&&flappyGame.disableInput){
+  finger.draw(ctx, camera);
+}
  if(flappyBird.alive===false){
   scoreBoard.draw(ctx,camera);
   if(playButton.visible){
    playButton.draw(ctx, camera);
  }
+
 }
 
 }
@@ -720,6 +788,9 @@ activeForces = dirtyFilter(activeForces);
 canvas.addEventListener("click", canvasClick, false);
 
 document.onkeypress = function(evt) {
+  if(flappyGame.disableInput){
+    return;
+  }
  evt = evt || window.event;
  if (evt.keyCode === 32) {
   jumpEventNotifier.notifyJumpEvent();
@@ -727,6 +798,9 @@ document.onkeypress = function(evt) {
 };
 
 function canvasClick(e){
+   if(flappyGame.disableInput){
+      return;
+   }
   if(!gameOn){
     startGame();
   }
@@ -778,10 +852,11 @@ var callbackFreq = 10;
 flappyGame.getFlappyBird = getFlappyBird;
 flappyGame.startGame = startGame;
 flappyGame.getNextPipe = getNextPipe;
-flappyGame.restartGame = restartGame;
+flappyGame.restart = restartGame;
 flappyGame.getStateRectangle = getStateRectangle;
 flappyGame.simulateClick = function(){
   jumpEventNotifier.notifyJumpEvent();
+  finger.touch();
 };
 flappyGame.mouseClick = function(e){
   //console.log("mc" + e);
@@ -794,6 +869,7 @@ flappyGame.requestFunction = function(func, frames){
   callbackFreq = frames;
 
 };
+flappyGame.disableInput = false;
 
 flappyGame.calculateMomentum = function(){
   var mom = 0;
@@ -817,12 +893,96 @@ flappyGame.calculateMomentum = function(){
     return false;
   }
 };
+startGame();
 
 
 return flappyGame;
 
 
 /*------------------------API------------------------------------*/
+
+
+
+
+/*--------------------Snow Effect---------------------------------*/
+
+function SnowEffect(){
+
+  //canvas dimensions
+  this.W = screen_width;
+  this.H = screen_height;
+  //canvas.width = W;
+  //canvas.height = H;
+
+  //snowflake particles
+  this.mp = 25; //max particles
+  this.particles = [];
+  for(var i = 0; i < this.mp; i++)
+  {
+    this.particles.push({
+      x: Math.random()*this.W, //x-coordinate
+      y: Math.random()*this.H, //y-coordinate
+      r: Math.random()*4+1, //radius
+      d: Math.random()*this.mp //density
+    });
+  }
+
+  //Lets draw the flakes
+  this.draw = function()
+  {
+    //ctx.clearRect(0, 0, this.W, this.H);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.beginPath();
+    for(var i = 0; i < this.mp; i++)
+    {
+      var p = this.particles[i];
+      ctx.moveTo(p.x, p.y);
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2, true);
+    }
+    ctx.fill();
+    this.update();
+    //console.log("I am being drawn?");
+  };
+
+  //angle will be an ongoing incremental flag. Sin and Cos functions will be applied to it to create vertical and horizontal movements of the flakes
+  this.angle = 0;
+  this.update = function()
+  {
+    this.angle += 0.01;
+    for(var i = 0; i < this.mp; i++)
+    {
+      var p = this.particles[i];
+      p.y += Math.cos(this.angle+p.d) + 1 + p.r/2;
+      p.x += Math.sin(this.angle) * 2;
+
+      //Sending flakes back from the top when it exits
+      //Lets make it a bit more organic and let flakes enter from the left and right also.
+      if(p.x > this.W+5 || p.x < -5 || p.y > this.H)
+      {
+        if(i%3 > 0) //66.67% of the flakes
+        {
+          this.particles[i] = {x: Math.random()*this.W, y: -10, r: p.r, d: p.d};
+        }
+        else
+        {
+          //If the flake is exitting from the right
+          if(Math.sin(this.angle) > 0)
+          {
+            //Enter from the left
+            this.particles[i] = {x: -5, y: Math.random()*this.H, r: p.r, d: p.d};
+          }
+          else
+          {
+            //Enter from the right
+           this.particles[i] = {x: this.W+5, y: Math.random()*this.H, r: p.r, d: p.d};
+          }
+        }
+      }
+    }
+  };
+}
+
+/*****/
 
 
 
